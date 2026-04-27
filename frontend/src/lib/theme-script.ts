@@ -10,9 +10,8 @@ export const themeScript = `
     document.documentElement.classList.add(effectiveTheme);
     document.documentElement.setAttribute('data-theme', effectiveTheme);
   } catch (e) {
-    // Fallback to light theme
-    document.documentElement.classList.add('light');
-    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.classList.add('dark');
+    document.documentElement.setAttribute('data-theme', 'dark');
   }
 })();
 `
