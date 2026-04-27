@@ -148,33 +148,28 @@ async def get_source_chat_sessions(source_id: str = Path(..., description="Sourc
         if not source:
             raise HTTPException(status_code=404, detail="Source not found")
 
-        # Get sessions that refer to this source - first get relations, then sessions
-        relations = await repo_query(
-            "SELECT in FROM refers_to WHERE out = $source_id",
+        # Batch-fetch all sessions linked to this source in one query
+        session_rows = await repo_query(
+            """
+            SELECT * FROM chat_session
+            WHERE id IN (SELECT VALUE in FROM refers_to WHERE out = $source_id)
+            ORDER BY created DESC
+            """,
             {"source_id": ensure_record_id(full_source_id)},
         )
 
-        sessions = []
-        for relation in relations:
-            session_id = relation.get("in")
-            if session_id:
-                session_result = await repo_query(f"SELECT * FROM {session_id}")
-                if session_result and len(session_result) > 0:
-                    session_data = session_result[0]
-                    sessions.append(
-                        SourceChatSessionResponse(
-                            id=session_data.get("id") or "",
-                            title=session_data.get("title") or "Untitled Session",
-                            source_id=source_id,
-                            model_override=session_data.get("model_override"),
-                            created=str(session_data.get("created")),
-                            updated=str(session_data.get("updated")),
-                            message_count=0,  # TODO: Add message count if needed
-                        )
-                    )
-
-        # Sort sessions by created date (newest first)
-        sessions.sort(key=lambda x: x.created, reverse=True)
+        sessions = [
+            SourceChatSessionResponse(
+                id=row.get("id") or "",
+                title=row.get("title") or "Untitled Session",
+                source_id=source_id,
+                model_override=row.get("model_override"),
+                created=str(row.get("created")),
+                updated=str(row.get("updated")),
+                message_count=0,
+            )
+            for row in session_rows
+        ]
         return sessions
     except NotFoundError:
         raise HTTPException(status_code=404, detail="Source not found")
@@ -428,8 +423,7 @@ async def stream_source_chat_response(
         user_event = {"type": "user_message", "content": message, "timestamp": None}
         yield f"data: {json.dumps(user_event)}\n\n"
 
-        # Execute source chat graph synchronously (like notebook chat does)
-        result = source_chat_graph.invoke(
+        result = await source_chat_graph.ainvoke(
             input=state_values,  # type: ignore[arg-type]
             config=RunnableConfig(
                 configurable={"thread_id": session_id, "model_id": model_override}
