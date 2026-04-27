@@ -208,8 +208,7 @@ async def update_default_models(defaults_data: DefaultModelsResponse):
             defaults.default_tools_model = defaults_data.default_tools_model  # type: ignore[attr-defined]
 
         await defaults.update()
-
-        # No cache refresh needed - next access will fetch fresh data from DB
+        DefaultModels.invalidate_cache()
 
         return DefaultModelsResponse(
             default_chat_model=defaults.default_chat_model,  # type: ignore[attr-defined]

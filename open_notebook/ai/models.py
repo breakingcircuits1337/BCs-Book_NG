@@ -1,3 +1,4 @@
+import time
 from typing import ClassVar, Dict, Optional, Union
 
 from esperanto import (
@@ -40,9 +41,19 @@ class DefaultModels(RecordModel):
     default_embedding_model: Optional[str] = None
     default_tools_model: Optional[str] = None
 
+    # Short-lived cache to avoid a DB round-trip on every LLM call while still
+    # picking up live config changes within a few seconds.
+    _cache_ttl: ClassVar[float] = 5.0  # seconds
+    _cached_instance: ClassVar[Optional["DefaultModels"]] = None
+    _cached_at: ClassVar[float] = 0.0
+
     @classmethod
     async def get_instance(cls) -> "DefaultModels":
-        """Always fetch fresh defaults from database (override parent caching behavior)"""
+        """Return defaults from a 5-second TTL cache, falling back to a fresh DB fetch."""
+        now = time.monotonic()
+        if cls._cached_instance is not None and (now - cls._cached_at) < cls._cache_ttl:
+            return cls._cached_instance
+
         result = await repo_query(
             "SELECT * FROM ONLY $record_id",
             {"record_id": ensure_record_id(cls.record_id)},
@@ -62,7 +73,16 @@ class DefaultModels(RecordModel):
         instance = object.__new__(cls)
         object.__setattr__(instance, "__dict__", {})
         super(RecordModel, instance).__init__(**data)
+
+        cls._cached_instance = instance
+        cls._cached_at = now
         return instance
+
+    @classmethod
+    def invalidate_cache(cls) -> None:
+        """Force the next get_instance() call to fetch from the database."""
+        cls._cached_instance = None
+        cls._cached_at = 0.0
 
 
 class ModelManager:

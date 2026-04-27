@@ -353,7 +353,7 @@ async def execute_chat(request: ExecuteChatRequest):
         state_values["messages"].append(user_message)
 
         # Execute chat graph
-        result = chat_graph.invoke(
+        result = await chat_graph.ainvoke(
             input=state_values,  # type: ignore[arg-type]
             config=RunnableConfig(
                 configurable={
@@ -404,80 +404,84 @@ async def build_context(request: BuildContextRequest):
         context_data: dict[str, list[dict[str, str]]] = {"sources": [], "notes": []}
         total_content = ""
 
-        # Process context configuration if provided
+        import asyncio
+
+        async def _fetch_source_context(source_id: str, status: str):
+            if "not in" in status:
+                return None
+            full_source_id = (
+                source_id if source_id.startswith("source:") else f"source:{source_id}"
+            )
+            try:
+                source = await Source.get(full_source_id)
+            except Exception:
+                return None
+            size = "long" if "full content" in status else "short"
+            if "insights" in status or "full content" in status:
+                return await source.get_context(context_size=size)
+            return None
+
+        async def _fetch_note_context(note_id: str, status: str):
+            if "not in" in status:
+                return None
+            full_note_id = (
+                note_id if note_id.startswith("note:") else f"note:{note_id}"
+            )
+            try:
+                note = await Note.get(full_note_id)
+            except Exception:
+                return None
+            if not note:
+                return None
+            if "full content" in status:
+                return note.get_context(context_size="long")
+            return None
+
         if request.context_config:
-            # Process sources
-            for source_id, status in request.context_config.get("sources", {}).items():
-                if "not in" in status:
-                    continue
+            source_items = list(request.context_config.get("sources", {}).items())
+            note_items = list(request.context_config.get("notes", {}).items())
 
-                try:
-                    # Add table prefix if not present
-                    full_source_id = (
-                        source_id
-                        if source_id.startswith("source:")
-                        else f"source:{source_id}"
-                    )
+            source_results, note_results = await asyncio.gather(
+                asyncio.gather(
+                    *[_fetch_source_context(sid, st) for sid, st in source_items],
+                    return_exceptions=True,
+                ),
+                asyncio.gather(
+                    *[_fetch_note_context(nid, st) for nid, st in note_items],
+                    return_exceptions=True,
+                ),
+            )
 
-                    try:
-                        source = await Source.get(full_source_id)
-                    except Exception:
-                        continue
+            for result in source_results:
+                if result and not isinstance(result, Exception):
+                    context_data["sources"].append(result)
+                    total_content += str(result)
 
-                    if "insights" in status:
-                        source_context = await source.get_context(context_size="short")
-                        context_data["sources"].append(source_context)
-                        total_content += str(source_context)
-                    elif "full content" in status:
-                        source_context = await source.get_context(context_size="long")
-                        context_data["sources"].append(source_context)
-                        total_content += str(source_context)
-                except Exception as e:
-                    logger.warning(f"Error processing source {source_id}: {str(e)}")
-                    continue
-
-            # Process notes
-            for note_id, status in request.context_config.get("notes", {}).items():
-                if "not in" in status:
-                    continue
-
-                try:
-                    # Add table prefix if not present
-                    full_note_id = (
-                        note_id if note_id.startswith("note:") else f"note:{note_id}"
-                    )
-                    note = await Note.get(full_note_id)
-                    if not note:
-                        continue
-
-                    if "full content" in status:
-                        note_context = note.get_context(context_size="long")
-                        context_data["notes"].append(note_context)
-                        total_content += str(note_context)
-                except Exception as e:
-                    logger.warning(f"Error processing note {note_id}: {str(e)}")
-                    continue
+            for result in note_results:
+                if result and not isinstance(result, Exception):
+                    context_data["notes"].append(result)
+                    total_content += str(result)
         else:
-            # Default behavior - include all sources and notes with short context
-            sources = await notebook.get_sources()
-            for source in sources:
-                try:
-                    source_context = await source.get_context(context_size="short")
-                    context_data["sources"].append(source_context)
-                    total_content += str(source_context)
-                except Exception as e:
-                    logger.warning(f"Error processing source {source.id}: {str(e)}")
-                    continue
+            # Default: fetch sources and notes in parallel, then get source contexts
+            sources, notes = await asyncio.gather(
+                notebook.get_sources(), notebook.get_notes()
+            )
 
-            notes = await notebook.get_notes()
+            source_ctxs = await asyncio.gather(
+                *[s.get_context(context_size="short") for s in sources],
+                return_exceptions=True,
+            )
+
+            for result in source_ctxs:
+                if result and not isinstance(result, Exception):
+                    context_data["sources"].append(result)
+                    total_content += str(result)
+
+            # Note.get_context() is sync — no gather needed
             for note in notes:
-                try:
-                    note_context = note.get_context(context_size="short")
-                    context_data["notes"].append(note_context)
-                    total_content += str(note_context)
-                except Exception as e:
-                    logger.warning(f"Error processing note {note.id}: {str(e)}")
-                    continue
+                note_ctx = note.get_context(context_size="short")
+                context_data["notes"].append(note_ctx)
+                total_content += str(note_ctx)
 
         # Calculate character and token counts
         char_count = len(total_content)

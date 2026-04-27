@@ -102,7 +102,10 @@ async def save_source(state: SourceState) -> dict:
 
     if state["embed"]:
         logger.debug("Embedding content for vector search")
-        await source.vectorize()
+        embed_command_id = await source.vectorize()
+        # Update command reference so status polling reflects the embedding job
+        source.command = embed_command_id  # field_validator converts str → RecordID
+        await source.save()
 
     return {"source": source}
 
