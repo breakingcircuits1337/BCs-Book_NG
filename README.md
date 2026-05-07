@@ -64,6 +64,8 @@ In a world dominated by Artificial Intelligence, having the ability to think �
 - 🔍 **Search intelligently** - Full-text and vector search across all your content
 - 💬 **Chat with context** - AI conversations powered by your research
 - 🌐 **Multi-language UI** - English, Portuguese, Chinese (Simplified & Traditional), and Japanese support
+- 🎨 **Theme Customization** - Dark, light, or system theme with 6 accent color presets, all persisted across sessions
+- 🖥️ **Desktop App** - Install as a PWA from any Chromium browser, or use the one-command Linux desktop launcher
 
 Learn more about our project at [https://www.open-notebook.ai](https://www.open-notebook.ai)
 
@@ -136,6 +138,37 @@ Access: http://localhost:3000 (dev) or http://localhost:8502 (production)
 
 ---
 
+### 🐧 **Native / No-Docker (Linux & Mac)**
+
+**No Docker required** — runs SurrealDB, the API, and the frontend as native processes inside a Python venv:
+
+**One-time setup:**
+```bash
+git clone https://github.com/lfnovo/open-notebook.git
+cd open-notebook
+bash scripts/setup-native.sh   # installs uv, SurrealDB binary, Python venv, Node deps
+# then add at least one AI provider key to .env
+```
+
+**Launch:**
+```bash
+bash scripts/launch-native.sh   # starts all services + opens app in browser
+# or: make start-native
+```
+
+**Add a desktop icon** (GNOME / KDE / XFCE):
+```bash
+bash scripts/install-desktop.sh --mode=native
+```
+The app then appears in your application launcher. Clicking it starts everything automatically. All data is stored in `data/` and survives restarts.
+
+**Stop:**
+```bash
+bash scripts/launch-native.sh --stop   # or: make stop-native
+```
+
+---
+
 ### 📖 Need Help?
 
 - **🤖 AI Installation Assistant**: [CustomGPT to help you install](https://chatgpt.com/g/g-68776e2765b48191bd1bae3f30212631-open-notebook-installation-assistant)
@@ -193,6 +226,8 @@ Thanks to the [Esperanto](https://github.com/lfnovo/esperanto) library, we suppo
 - **🔐 Optional Password Protection**: Secure public deployments with authentication
 - **📊 Fine-Grained Context Control**: Choose exactly what to share with AI models
 - **📎 Citations**: Get answers with proper source citations
+- **🎨 Theme & Accent Customization**: Pick dark/light/system mode and one of 6 accent color presets from the Settings page; choice is persisted and applied instantly without a page reload
+- **🖥️ Desktop App Support**: Installable as a PWA (browser install prompt) or via a native Linux `.desktop` launcher — opens in a chromeless app window with all data preserved on close
 
 
 ## Podcast Feature
@@ -235,6 +270,9 @@ Thanks to the [Esperanto](https://github.com/lfnovo/esperanto) library, we suppo
 - **Bookmark Integration**: Connect with your favorite bookmarking apps
 
 ### Recently Completed ✅
+- **Theme Customization**: In-app accent color picker (6 presets: Blue, Purple, Green, Rose, Orange, Teal) with dark/light/system toggle, persisted to localStorage and flash-free on page load
+- **Desktop App / PWA**: Installable as a Progressive Web App from any Chromium browser; one-command Linux `.desktop` launcher via `scripts/install-desktop.sh`
+- **Native (No-Docker) Installation**: Full Docker-free path — `setup-native.sh` installs all deps into an isolated Python venv, `launch-native.sh` manages all four services with graceful shutdown
 - **Next.js Frontend**: Modern React-based frontend with improved performance
 - **Comprehensive REST API**: Full programmatic access to all functionality
 - **Multi-Model Support**: 16+ AI providers including OpenAI, Anthropic, Ollama, LM Studio
