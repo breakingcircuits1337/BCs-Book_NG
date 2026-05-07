@@ -1,6 +1,7 @@
 .PHONY: run frontend check ruff database lint api start-all stop-all status clean-cache worker worker-start worker-stop worker-restart
 .PHONY: docker-buildx-prepare docker-buildx-clean docker-buildx-reset
 .PHONY: docker-push docker-push-latest docker-release docker-build-local tag export-docs
+.PHONY: setup-native start-native stop-native install-desktop install-desktop-native
 
 # Get version from pyproject.toml
 VERSION := $(shell grep -m1 version pyproject.toml | cut -d'"' -f2)
@@ -197,6 +198,22 @@ export-docs:
 	@echo "📚 Exporting documentation..."
 	@uv run python scripts/export_docs.py
 	@echo "✅ Documentation export complete!"
+
+# === Native (no-Docker) mode ===
+setup-native:
+	@bash scripts/setup-native.sh
+
+start-native:
+	@bash scripts/launch-native.sh
+
+stop-native:
+	@bash scripts/launch-native.sh --stop
+
+install-desktop:
+	@bash scripts/install-desktop.sh --mode=docker
+
+install-desktop-native:
+	@bash scripts/install-desktop.sh --mode=native
 
 # === Cleanup ===
 clean-cache:
