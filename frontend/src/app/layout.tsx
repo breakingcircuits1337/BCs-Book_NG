@@ -13,8 +13,8 @@ import { ServiceWorkerProvider } from "@/components/providers/ServiceWorkerProvi
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Open Notebook",
-  description: "Privacy-focused research and knowledge management",
+  title: "BCs BookNG",
+  description: "Privacy-focused AI research and knowledge management",
 };
 
 export default function RootLayout({

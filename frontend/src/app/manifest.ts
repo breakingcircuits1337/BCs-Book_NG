@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Open Notebook',
-    short_name: 'Open Notebook',
+    name: 'BCs BookNG',
+    short_name: 'BCs BookNG',
     description: 'Privacy-focused AI research assistant',
     start_url: '/',
     display: 'standalone',

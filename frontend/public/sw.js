@@ -1,4 +1,4 @@
-const CACHE = 'open-notebook-shell-v1';
+const CACHE = 'bcs-bookng-shell-v1';
 
 // Cache the app shell on install so the browser shows the PWA install prompt
 self.addEventListener('install', (event) => {

@@ -28,7 +28,7 @@ export const jaJP = {
     podcast: "ポッドキャスト",
     quickActions: "クイックアクション",
     quickActionsDesc: "ナビゲーション、検索、質問、テーマ",
-    appName: "Open Notebook",
+    appName: "BCs BookNG",
     add: "追加",
     remove: "削除",
     confirm: "確認",

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs Open Notebook as a Linux desktop application.
+# Installs BCs BookNG as a Linux desktop application.
 # After running, the app appears in your application launcher (GNOME, KDE, XFCE, etc.)
 # and you can pin it to your taskbar/dock.
 #
@@ -30,7 +30,7 @@ for arg in "$@"; do
     --mode=native) MODE="native" ;;
     --mode=docker) MODE="docker" ;;
     --uninstall)
-      info "Uninstalling Open Notebook desktop entry…"
+      info "Uninstalling BCs BookNG desktop entry…"
       rm -f "$DESKTOP_FILE" "$ICON_DIR/open-notebook.svg"
       command -v update-desktop-database &>/dev/null && \
         update-desktop-database "$APPS_DIR" 2>/dev/null || true
@@ -42,7 +42,7 @@ done
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Open Notebook — Desktop Installer ($MODE mode)"
+echo "  BCs BookNG — Desktop Installer ($MODE mode)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
@@ -62,10 +62,10 @@ fi
 # ── Choose launch script ───────────────────────────────────────────────────────
 if [ "$MODE" = "native" ]; then
   LAUNCH_SCRIPT="$PROJECT_DIR/scripts/launch-native.sh"
-  ENTRY_NAME="Open Notebook (native)"
+  ENTRY_NAME="BCs BookNG (native)"
 else
   LAUNCH_SCRIPT="$PROJECT_DIR/scripts/launch.sh"
-  ENTRY_NAME="Open Notebook"
+  ENTRY_NAME="BCs BookNG"
 fi
 
 # ── Install icon ───────────────────────────────────────────────────────────────
@@ -110,7 +110,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo -e "  ${GREEN}Installation complete!${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "Open Notebook now appears in your application launcher."
+echo "BCs BookNG now appears in your application launcher."
 if [ "$MODE" = "native" ]; then
   echo "It will start SurrealDB, the API, the worker, and the"
   echo "frontend automatically — no Docker needed."

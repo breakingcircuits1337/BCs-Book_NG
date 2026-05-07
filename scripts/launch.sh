@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Open Notebook launcher — starts the full stack and opens the app in a dedicated window.
+# BCs BookNG launcher — starts the full stack and opens the app in a dedicated window.
 # Works with Docker Compose (single-container mode by default).
 # Usage: ./scripts/launch.sh [--compose-file docker-compose.single.yml]
 
@@ -19,14 +19,14 @@ if ! command -v docker &>/dev/null; then
   exit 1
 fi
 
-echo "[Open Notebook] Starting stack with $COMPOSE_FILE …"
+echo "[BCs BookNG] Starting stack with $COMPOSE_FILE …"
 docker compose -f "$COMPOSE_FILE" up -d
 
 # ── Wait for the frontend to be ready ─────────────────────────────────────────
-echo "[Open Notebook] Waiting for app to be ready at $APP_URL …"
+echo "[BCs BookNG] Waiting for app to be ready at $APP_URL …"
 for i in $(seq 1 "$WAIT_SECONDS"); do
   if curl -sf --max-time 2 "$APP_URL" > /dev/null 2>&1; then
-    echo "[Open Notebook] Ready."
+    echo "[BCs BookNG] Ready."
     break
   fi
   if [ "$i" -eq "$WAIT_SECONDS" ]; then
@@ -49,14 +49,14 @@ open_app() {
       microsoft-edge-stable \
       brave-browser; do
     if command -v "$browser" &>/dev/null; then
-      echo "[Open Notebook] Opening with $browser --app=$url"
+      echo "[BCs BookNG] Opening with $browser --app=$url"
       "$browser" --app="$url" --class=open-notebook &
       return 0
     fi
   done
   # Fallback: open in system default browser
   if command -v xdg-open &>/dev/null; then
-    echo "[Open Notebook] Opening with xdg-open (no app-mode)"
+    echo "[BCs BookNG] Opening with xdg-open (no app-mode)"
     xdg-open "$url" &
   elif command -v sensible-browser &>/dev/null; then
     sensible-browser "$url" &

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time setup for running Open Notebook without Docker.
+# One-time setup for running BCs BookNG without Docker.
 # Safe to re-run — it skips steps that are already complete.
 #
 # What it installs/configures:
@@ -23,7 +23,7 @@ fail() { echo -e "${RED}✗${NC} $*" >&2; exit 1; }
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Open Notebook — Native Setup"
+echo "  BCs BookNG — Native Setup"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 

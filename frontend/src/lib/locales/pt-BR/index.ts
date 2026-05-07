@@ -28,7 +28,7 @@ export const ptBR = {
     podcast: "Podcast",
     quickActions: "Ações rápidas",
     quickActionsDesc: "Navegação, busca, perguntar, tema",
-    appName: "Open Notebook",
+    appName: "BCs BookNG",
     add: "Adicionar",
     remove: "Remover",
     confirm: "Confirmar",

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Open Notebook
+Name=BCs BookNG
 GenericName=AI Research Assistant
 Comment=Privacy-focused AI research and knowledge management
 Exec=INSTALL_PATH/scripts/launch.sh

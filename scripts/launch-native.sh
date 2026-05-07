@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Launches Open Notebook natively (no Docker).
+# Launches BCs BookNG natively (no Docker).
 # Starts SurrealDB, the API, the background worker, and the Next.js frontend,
 # then opens the app in a dedicated browser window.
 #
@@ -30,7 +30,7 @@ fail() { echo -e "${RED}✗${NC} $*" >&2; exit 1; }
 
 # ── --stop flag ───────────────────────────────────────────────────────────────
 if [[ "${1:-}" == "--stop" ]]; then
-  info "Stopping native Open Notebook services…"
+  info "Stopping native BCs BookNG services…"
   [ -f "$PID_DIR/frontend.pid" ] && kill "$(cat "$PID_DIR/frontend.pid")" 2>/dev/null && ok "Frontend stopped" || true
   [ -f "$PID_DIR/worker.pid"   ] && kill "$(cat "$PID_DIR/worker.pid")"   2>/dev/null && ok "Worker stopped"   || true
   [ -f "$PID_DIR/api.pid"      ] && kill "$(cat "$PID_DIR/api.pid")"      2>/dev/null && ok "API stopped"      || true
@@ -86,7 +86,7 @@ trap cleanup EXIT INT TERM
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Open Notebook — Starting (native mode)"
+echo "  BCs BookNG — Starting (native mode)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
@@ -193,7 +193,7 @@ fi
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "  ${GREEN}Open Notebook is running${NC}"
+echo -e "  ${GREEN}BCs BookNG is running${NC}"
 echo "  Frontend : $APP_URL"
 echo "  API      : $API_URL"
 echo "  API docs : $API_URL/docs"
