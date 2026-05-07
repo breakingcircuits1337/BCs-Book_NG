@@ -8,6 +8,7 @@ import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { ConnectionGuard } from "@/components/common/ConnectionGuard";
 import { themeScript } from "@/lib/theme-script";
 import { I18nProvider } from "@/components/providers/I18nProvider";
+import { ServiceWorkerProvider } from "@/components/providers/ServiceWorkerProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,6 +28,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className={inter.className}>
+        <ServiceWorkerProvider>
         <ErrorBoundary>
           <ThemeProvider>
             <QueryProvider>
@@ -39,6 +41,7 @@ export default function RootLayout({
             </QueryProvider>
           </ThemeProvider>
         </ErrorBoundary>
+        </ServiceWorkerProvider>
       </body>
     </html>
   );

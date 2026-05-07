@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Open Notebook
+GenericName=AI Research Assistant
+Comment=Privacy-focused AI research and knowledge management
+Exec=INSTALL_PATH/scripts/launch.sh
+Icon=open-notebook
+Terminal=false
+StartupNotify=true
+StartupWMClass=open-notebook
+Categories=Office;Science;Education;
+Keywords=AI;notebook;research;notes;podcast;
