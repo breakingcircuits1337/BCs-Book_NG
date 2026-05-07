@@ -1,10 +1,12 @@
-# Open Notebook - Root CLAUDE.md
+# BCs BookNG - Root CLAUDE.md
 
-This file provides architectural guidance for contributors working on Open Notebook at the project level.
+This file provides architectural guidance for contributors working on BCs BookNG at the project level.
+
+> **Fork**: BCs BookNG is a fork of [Open Notebook](https://github.com/lfnovo/open-notebook) by Luis Novo, used under the MIT License.
 
 ## Project Overview
 
-**Open Notebook** is an open-source, privacy-focused alternative to Google's Notebook LM. It's an AI-powered research assistant enabling users to upload multi-modal content (PDFs, audio, video, web pages), generate intelligent notes, search semantically, chat with AI models, and produce professional podcasts—all with complete control over data and choice of AI providers.
+**BCs BookNG** is an open-source, privacy-focused alternative to Google's Notebook LM. It's an AI-powered research assistant enabling users to upload multi-modal content (PDFs, audio, video, web pages), generate intelligent notes, search semantically, chat with AI models, and produce professional podcasts—all with complete control over data and choice of AI providers.
 
 **Key Values**: Privacy-first, multi-provider AI support, fully self-hosted option, open-source transparency.
 

@@ -83,8 +83,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Open Notebook API",
-    description="API for Open Notebook - Research Assistant",
+    title="BCs BookNG API",
+    description="API for BCs BookNG - AI Research Assistant",
     lifespan=lifespan,
 )
 
@@ -166,7 +166,7 @@ app.include_router(source_chat.router, prefix="/api", tags=["source-chat"])
 
 @app.get("/")
 async def root():
-    return {"message": "Open Notebook API is running"}
+    return {"message": "BCs BookNG API is running"}
 
 
 @app.get("/health")

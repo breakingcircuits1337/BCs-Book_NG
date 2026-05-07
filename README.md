@@ -15,13 +15,13 @@
     <img src="docs/assets/hero.svg" alt="Logo">
   </a>
 
-  <h3 align="center">Open Notebook</h3>
+  <h3 align="center">BCs BookNG</h3>
 
   <p align="center">
-    An open source, privacy-focused alternative to Google's Notebook LM!
+    A privacy-focused AI research assistant — forked from <a href="https://github.com/lfnovo/open-notebook">Open Notebook</a> by Luis Novo.
     <br /><strong>Join our <a href="https://discord.gg/37XJPXfz2w">Discord server</a> for help, to share workflow ideas, and suggest features!</strong>
     <br />
-    <a href="https://www.open-notebook.ai"><strong>Checkout our website »</strong></a>
+    <a href="https://www.open-notebook.ai"><strong>Upstream project website »</strong></a>
     <br />
     <br />
     <a href="docs/0-START-HERE/index.md">📚 Get Started</a>
@@ -50,13 +50,13 @@
   <a href="https://zdoc.app/zh/lfnovo/open-notebook">中文</a>
 </div>
 
-## A private, multi-model, 100% local, full-featured alternative to Notebook LM
+## BCs BookNG — A private, multi-model, 100% local, full-featured alternative to Notebook LM
 
 ![New Notebook](docs/assets/asset_list.png)
 
 In a world dominated by Artificial Intelligence, having the ability to think 🧠 and acquire new knowledge 💡, is a skill that should not be a privilege for a few, nor restricted to a single provider.
 
-**Open Notebook empowers you to:**
+**BCs BookNG empowers you to:**
 - 🔒 **Control your data** - Keep your research private and secure
 - 🤖 **Choose your AI models** - Support for 16+ providers including OpenAI, Anthropic, Ollama, LM Studio, and more
 - 📚 **Organize multi-modal content** - PDFs, videos, audio, web pages, and more
@@ -64,15 +64,17 @@ In a world dominated by Artificial Intelligence, having the ability to think �
 - 🔍 **Search intelligently** - Full-text and vector search across all your content
 - 💬 **Chat with context** - AI conversations powered by your research
 - 🌐 **Multi-language UI** - English, Portuguese, Chinese (Simplified & Traditional), and Japanese support
+- 🎨 **Theme Customization** - Dark, light, or system theme with 6 accent color presets, all persisted across sessions
+- 🖥️ **Desktop App** - Install as a PWA from any Chromium browser, or use the one-command Linux desktop launcher
 
 Learn more about our project at [https://www.open-notebook.ai](https://www.open-notebook.ai)
 
 ---
 
-## 🆚 Open Notebook vs Google Notebook LM
+## 🆚 BCs BookNG vs Google Notebook LM
 
-| Feature | Open Notebook | Google Notebook LM | Advantage |
-|---------|---------------|--------------------|-----------|
+| Feature | BCs BookNG | Google Notebook LM | Advantage |
+|---------|------------|--------------------|-----------|
 | **Privacy & Control** | Self-hosted, your data | Google cloud only | Complete data sovereignty |
 | **AI Provider Choice** | 16+ providers (OpenAI, Anthropic, Ollama, LM Studio, etc.) | Google models only | Flexibility and cost optimization |
 | **Podcast Speakers** | 1-4 speakers with custom profiles | 2 speakers only | Extreme flexibility |
@@ -83,7 +85,7 @@ Learn more about our project at [https://www.open-notebook.ai](https://www.open-
 | **Customization** | Open source, fully customizable | Closed system | Unlimited extensibility |
 | **Cost** | Pay only for AI usage | Free tier + Monthly subscription | Transparent and controllable |
 
-**Why Choose Open Notebook?**
+**Why Choose BCs BookNG?**
 - 🔒 **Privacy First**: Your sensitive research stays completely private
 - 💰 **Cost Control**: Choose cheaper AI providers or run locally with Ollama
 - 🎙️ **Better Podcasts**: Full script control and multi-speaker flexibility vs limited 2-speaker deep-dive format
@@ -133,6 +135,37 @@ make start-all
 ```
 
 Access: http://localhost:3000 (dev) or http://localhost:8502 (production)
+
+---
+
+### 🐧 **Native / No-Docker (Linux & Mac)**
+
+**No Docker required** — runs SurrealDB, the API, and the frontend as native processes inside a Python venv:
+
+**One-time setup:**
+```bash
+git clone https://github.com/lfnovo/open-notebook.git
+cd open-notebook
+bash scripts/setup-native.sh   # installs uv, SurrealDB binary, Python venv, Node deps
+# then add at least one AI provider key to .env
+```
+
+**Launch:**
+```bash
+bash scripts/launch-native.sh   # starts all services + opens app in browser
+# or: make start-native
+```
+
+**Add a desktop icon** (GNOME / KDE / XFCE):
+```bash
+bash scripts/install-desktop.sh --mode=native
+```
+The app then appears in your application launcher. Clicking it starts everything automatically. All data is stored in `data/` and survives restarts.
+
+**Stop:**
+```bash
+bash scripts/launch-native.sh --stop   # or: make stop-native
+```
 
 ---
 
@@ -193,6 +226,8 @@ Thanks to the [Esperanto](https://github.com/lfnovo/esperanto) library, we suppo
 - **🔐 Optional Password Protection**: Secure public deployments with authentication
 - **📊 Fine-Grained Context Control**: Choose exactly what to share with AI models
 - **📎 Citations**: Get answers with proper source citations
+- **🎨 Theme & Accent Customization**: Pick dark/light/system mode and one of 6 accent color presets from the Settings page; choice is persisted and applied instantly without a page reload
+- **🖥️ Desktop App Support**: Installable as a PWA (browser install prompt) or via a native Linux `.desktop` launcher — opens in a chromeless app window with all data preserved on close
 
 
 ## Podcast Feature
@@ -235,6 +270,9 @@ Thanks to the [Esperanto](https://github.com/lfnovo/esperanto) library, we suppo
 - **Bookmark Integration**: Connect with your favorite bookmarking apps
 
 ### Recently Completed ✅
+- **Theme Customization**: In-app accent color picker (6 presets: Blue, Purple, Green, Rose, Orange, Teal) with dark/light/system toggle, persisted to localStorage and flash-free on page load
+- **Desktop App / PWA**: Installable as a Progressive Web App from any Chromium browser; one-command Linux `.desktop` launcher via `scripts/install-desktop.sh`
+- **Native (No-Docker) Installation**: Full Docker-free path — `setup-native.sh` installs all deps into an isolated Python venv, `launch-native.sh` manages all four services with graceful shutdown
 - **Next.js Frontend**: Modern React-based frontend with improved performance
 - **Comprehensive REST API**: Full programmatic access to all functionality
 - **Multi-Model Support**: 16+ AI providers including OpenAI, Anthropic, Ollama, LM Studio
@@ -278,7 +316,9 @@ See our [Contributing Guide](CONTRIBUTING.md) for detailed information on how to
 
 ## 📄 License
 
-Open Notebook is MIT licensed. See the [LICENSE](LICENSE) file for details.
+BCs BookNG is MIT licensed. See the [LICENSE](LICENSE) file for details.
+
+BCs BookNG is a fork of [Open Notebook](https://github.com/lfnovo/open-notebook) by Luis Novo, used under the MIT License. The original copyright notice is preserved in the LICENSE file as required.
 
 
 **Community Support**:

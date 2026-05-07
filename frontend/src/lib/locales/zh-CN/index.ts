@@ -33,7 +33,7 @@ export const zhCN = {
     podcast: "播客",
     quickActions: "快捷操作",
     quickActionsDesc: "导航、搜索、提问、主题",
-    appName: "Open Notebook",
+    appName: "BCs BookNG",
     add: "添加",
     remove: "移除",
     confirm: "确认",
@@ -765,6 +765,9 @@ export const zhCN = {
     autoDeletePlaceholder: "选择自动删除选项",
     filesHelp: "文件处理完成后，原始件不再需要。建议开启自动删除以节省存储空间。除非您将其作为主要存储位置（不建议），否则请选择“是”。",
     loadFailed: "加载设置失败",
+    appearance: "外观",
+    appearanceDesc: "自定义应用程序的外观和风格",
+    accentColor: "强调色",
   },
   advanced: {
     title: "高级工具",

@@ -28,7 +28,7 @@ export const jaJP = {
     podcast: "ポッドキャスト",
     quickActions: "クイックアクション",
     quickActionsDesc: "ナビゲーション、検索、質問、テーマ",
-    appName: "Open Notebook",
+    appName: "BCs BookNG",
     add: "追加",
     remove: "削除",
     confirm: "確認",
@@ -765,6 +765,9 @@ export const jaJP = {
     autoDeletePlaceholder: "自動削除オプションを選択",
     filesHelp: "ファイルがアップロードされて処理されると、ファイル自体は不要になります。ほとんどのユーザーはOpen Notebookがアップロードフォルダから自動的にファイルを削除することを許可すべきです。",
     loadFailed: "設定の読み込みに失敗しました",
+    appearance: "外観",
+    appearanceDesc: "アプリケーションの外観をカスタマイズ",
+    accentColor: "アクセントカラー",
   },
   advanced: {
     title: "詳細ツール",

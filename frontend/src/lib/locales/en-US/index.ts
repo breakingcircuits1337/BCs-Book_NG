@@ -28,7 +28,7 @@ export const enUS = {
     podcast: "Podcast",
     quickActions: "Quick actions",
     quickActionsDesc: "Navigation, search, ask, theme",
-    appName: "Open Notebook",
+    appName: "BCs BookNG",
     add: "Add",
     remove: "Remove",
     confirm: "Confirm",
@@ -765,6 +765,9 @@ export const enUS = {
     autoDeletePlaceholder: "Select auto delete option",
     filesHelp: "Once your files are uploaded and processed, they are not required anymore. Most users should allow Open Notebook to delete uploaded files from the upload folder automatically.",
     loadFailed: "Failed to load settings",
+    appearance: "Appearance",
+    appearanceDesc: "Customize the look and feel of the application",
+    accentColor: "Accent Color",
   },
   advanced: {
     title: "AdvancedTools",
