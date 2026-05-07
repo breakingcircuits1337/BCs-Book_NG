@@ -2,6 +2,7 @@
 
 import { AppShell } from '@/components/layout/AppShell'
 import { SettingsForm } from './components/SettingsForm'
+import { ThemeCustomizer } from './components/ThemeCustomizer'
 import { useSettings } from '@/lib/hooks/use-settings'
 import { Button } from '@/components/ui/button'
 import { RefreshCw } from 'lucide-react'
@@ -22,6 +23,7 @@ export default function SettingsPage() {
                 <RefreshCw className="h-4 w-4" />
               </Button>
             </div>
+            <ThemeCustomizer />
             <SettingsForm />
           </div>
         </div>

@@ -765,6 +765,9 @@ export const ptBR = {
     autoDeletePlaceholder: "Selecione a opção de exclusão automática",
     filesHelp: "Uma vez que seus arquivos são enviados e processados, eles não são mais necessários. A maioria dos usuários deve permitir que o Open Notebook exclua arquivos enviados da pasta de upload automaticamente.",
     loadFailed: "Falha ao carregar configurações",
+    appearance: "Aparência",
+    appearanceDesc: "Personalize a aparência do aplicativo",
+    accentColor: "Cor de Destaque",
   },
   advanced: {
     title: "Ferramentas Avançadas",

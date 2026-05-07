@@ -765,6 +765,9 @@ export const zhTW = {
     autoDeletePlaceholder: "選擇自動刪除選項",
     filesHelp: "檔案處理完成後，原始件不再需要。建議開啟自動刪除以節省儲存空間。除非您將其作為主要儲存位置（不建議），否則請選擇“是”。",
     loadFailed: "載入設定失敗",
+    appearance: "外觀",
+    appearanceDesc: "自訂應用程式的外觀和風格",
+    accentColor: "強調色",
   },
   advanced: {
     title: "進階工具",
