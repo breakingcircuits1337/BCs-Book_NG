@@ -45,16 +45,29 @@ OPEN_BROWSER=true
 
 cd "$PROJECT_DIR"
 
-# ── Extend PATH for uv/surreal installed by setup-native.sh ───────────────────
-export PATH="$HOME/.local/bin:$HOME/.surrealdb/bin:$PATH"
+# ── Extend PATH for surreal installed by setup-native.sh ─────────────────────
+export PATH="$HOME/.surrealdb/bin:$PATH"
+
+VENV="$PROJECT_DIR/.venv"
 
 # ── Pre-flight checks ─────────────────────────────────────────────────────────
 info "Checking prerequisites…"
 
 [ -f "$PROJECT_DIR/.env" ] || fail ".env not found. Run: bash scripts/setup-native.sh"
+[ -d "$VENV" ]             || fail "venv not found at .venv. Run: bash scripts/setup-native.sh"
 command -v surreal &>/dev/null || fail "SurrealDB not found. Run: bash scripts/setup-native.sh"
-command -v uv &>/dev/null     || fail "uv not found. Run: bash scripts/setup-native.sh"
 command -v node &>/dev/null   || fail "Node.js not found. Run: bash scripts/setup-native.sh"
+
+# ── Activate the project venv ─────────────────────────────────────────────────
+# shellcheck source=/dev/null
+source "$VENV/bin/activate"
+ok "venv active ($(python --version))"
+
+# ── Load .env into the shell so all child processes inherit it ────────────────
+set -a
+# shellcheck source=/dev/null
+source "$PROJECT_DIR/.env"
+set +a
 
 mkdir -p "$SURREAL_DATA" "$PID_DIR" "$LOG_DIR"
 
@@ -108,7 +121,7 @@ if curl -sf --max-time 1 "$API_URL/health" >/dev/null 2>&1; then
   ok "API already running on port 5055"
 else
   info "Starting API server on port 5055…"
-  API_RELOAD=false uv run run_api.py \
+  API_RELOAD=false python "$PROJECT_DIR/run_api.py" \
     >"$LOG_DIR/api.log" 2>&1 &
   echo $! > "$PID_DIR/api.pid"
 
@@ -127,7 +140,7 @@ if pgrep -f "surreal-commands-worker" >/dev/null 2>&1; then
   ok "Worker already running"
 else
   info "Starting background worker…"
-  uv run --env-file .env surreal-commands-worker --import-modules commands \
+  surreal-commands-worker --import-modules commands \
     >"$LOG_DIR/worker.log" 2>&1 &
   echo $! > "$PID_DIR/worker.pid"
   sleep 2

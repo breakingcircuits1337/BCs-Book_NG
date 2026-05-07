@@ -81,10 +81,19 @@ else
   fi
 fi
 
-# ── 4. Python dependencies ─────────────────────────────────────────────────────
-info "Installing Python dependencies (uv sync)…"
+# ── 4. Python virtual environment + dependencies ──────────────────────────────
+VENV="$PROJECT_DIR/.venv"
+if [ -d "$VENV" ]; then
+  ok "venv already exists at .venv"
+else
+  info "Creating Python virtual environment at .venv…"
+  uv venv "$VENV"
+  ok "venv created"
+fi
+
+info "Installing Python dependencies into .venv…"
 uv sync
-ok "Python dependencies installed"
+ok "Python dependencies installed into $VENV"
 
 # ── 5. Node.js dependencies ───────────────────────────────────────────────────
 info "Installing Node.js dependencies…"
