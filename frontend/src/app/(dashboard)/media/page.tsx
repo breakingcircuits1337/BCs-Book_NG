@@ -1,323 +1,141 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Clapperboard, Music, Film, Loader2, Layers } from 'lucide-react'
+import { Separator } from '@/components/ui/separator'
+import { Clapperboard, ImageIcon, Music2, Loader2, X, Upload } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { mediaApi } from '@/lib/api/media'
+
+// ---------------------------------------------------------------------------
+// Reusable pill-toggle group
+// ---------------------------------------------------------------------------
+
+interface ToggleOption<T extends string> {
+  value: T
+  label: string
+}
+
+function ToggleGroup<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: ToggleOption<T>[]
+  value: T
+  onChange: (v: T) => void
+}) {
+  return (
+    <div className="inline-flex rounded-lg border border-border overflow-hidden">
+      {options.map((opt, i) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={cn(
+            'px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            i > 0 && 'border-l border-border',
+            value === opt.value
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-background text-muted-foreground hover:bg-muted hover:text-foreground'
+          )}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// File upload pill
+// ---------------------------------------------------------------------------
+
+function FilePill({
+  accept,
+  icon,
+  label,
+  file,
+  onChange,
+}: {
+  accept: string
+  icon: React.ReactNode
+  label: string
+  file: File | null
+  onChange: (f: File | null) => void
+}) {
+  const ref = useRef<HTMLInputElement>(null)
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        ref={ref}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(e) => onChange(e.target.files?.[0] ?? null)}
+      />
+      {file ? (
+        <div className="flex items-center gap-1.5 rounded-full border bg-muted px-3 py-1 text-sm">
+          {icon}
+          <span className="max-w-[160px] truncate">{file.name}</span>
+          <button
+            type="button"
+            onClick={() => {
+              onChange(null)
+              if (ref.current) ref.current.value = ''
+            }}
+            className="ml-0.5 rounded-full text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => ref.current?.click()}
+          className="flex items-center gap-1.5 rounded-full border border-dashed bg-background px-3 py-1 text-sm text-muted-foreground hover:border-primary hover:text-foreground transition-colors"
+        >
+          <Upload className="h-3.5 w-3.5" />
+          {label}
+        </button>
+      )}
+    </div>
+  )
+}
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type DialogType = 'music' | 'video' | 'combined' | null
+type MediaMode = 'music' | 'video' | 'both'
+type MusicProvider = 'suno' | 'udio' | 'both'
+type VideoProvider = 'runway' | 'pika' | 'both'
 
-// ---------------------------------------------------------------------------
-// Quick-generate dialogs
-// ---------------------------------------------------------------------------
+const MEDIA_OPTIONS: ToggleOption<MediaMode>[] = [
+  { value: 'music', label: 'Music' },
+  { value: 'video', label: 'Video' },
+  { value: 'both', label: 'Both' },
+]
 
-function MusicDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [name, setName] = useState('')
-  const [prompt, setPrompt] = useState('')
-  const [style, setStyle] = useState<string>('auto')
-  const [loading, setLoading] = useState(false)
+const MUSIC_OPTIONS: ToggleOption<MusicProvider>[] = [
+  { value: 'suno', label: 'Suno' },
+  { value: 'udio', label: 'Udio' },
+  { value: 'both', label: 'Both' },
+]
 
-  const handleSubmit = async () => {
-    if (!name.trim() || !prompt.trim()) {
-      toast.error('Please fill in both name and prompt.')
-      return
-    }
-    setLoading(true)
-    try {
-      const res = await mediaApi.generateMusic({
-        name: name.trim(),
-        prompt: prompt.trim(),
-        style: style === 'auto' ? undefined : style,
-      })
-      toast.success(`Music job submitted (ID: ${res.job_id})`)
-      onClose()
-      setName('')
-      setPrompt('')
-      setStyle('auto')
-    } catch {
-      toast.error('Failed to submit music generation job.')
-    } finally {
-      setLoading(false)
-    }
-  }
+const VIDEO_OPTIONS: ToggleOption<VideoProvider>[] = [
+  { value: 'runway', label: 'RunwayML' },
+  { value: 'pika', label: 'Pika' },
+  { value: 'both', label: 'Both' },
+]
 
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Music className="h-5 w-5" /> Generate Music
-          </DialogTitle>
-          <DialogDescription>
-            Describe the music you want. The smart router picks Suno (vocals/lyrics) or Udio (instrumental/ambient) based on your style choice.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="music-name">Name</Label>
-            <Input
-              id="music-name"
-              placeholder="My background track"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="music-prompt">Prompt</Label>
-            <Textarea
-              id="music-prompt"
-              placeholder="Upbeat jazz with piano and trumpet, café atmosphere…"
-              rows={3}
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="music-style">Style (for smart routing)</Label>
-            <Select value={style} onValueChange={setStyle}>
-              <SelectTrigger id="music-style">
-                <SelectValue placeholder="Auto-detect" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Auto-detect</SelectItem>
-                <SelectItem value="vocals">Vocals / Song (→ Suno)</SelectItem>
-                <SelectItem value="instrumental">Instrumental (→ Udio)</SelectItem>
-                <SelectItem value="ambient">Ambient (→ Udio)</SelectItem>
-                <SelectItem value="cinematic">Cinematic (→ Udio)</SelectItem>
-                <SelectItem value="pop">Pop (→ Suno)</SelectItem>
-                <SelectItem value="jazz">Jazz (→ Udio)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Generate
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function VideoDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [name, setName] = useState('')
-  const [prompt, setPrompt] = useState('')
-  const [style, setStyle] = useState<string>('auto')
-  const [loading, setLoading] = useState(false)
-
-  const handleSubmit = async () => {
-    if (!name.trim() || !prompt.trim()) {
-      toast.error('Please fill in both name and prompt.')
-      return
-    }
-    setLoading(true)
-    try {
-      const res = await mediaApi.generateVideo({
-        name: name.trim(),
-        prompt: prompt.trim(),
-        style: style === 'auto' ? undefined : style,
-      })
-      toast.success(`Video job submitted (ID: ${res.job_id})`)
-      onClose()
-      setName('')
-      setPrompt('')
-      setStyle('auto')
-    } catch {
-      toast.error('Failed to submit video generation job.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Film className="h-5 w-5" /> Generate Video
-          </DialogTitle>
-          <DialogDescription>
-            Describe the video you want. The smart router picks RunwayML (cinematic/realistic) or Pika (animated/stylized) based on your style choice.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="video-name">Name</Label>
-            <Input
-              id="video-name"
-              placeholder="My intro clip"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="video-prompt">Prompt</Label>
-            <Textarea
-              id="video-prompt"
-              placeholder="A misty mountain landscape at sunrise, slow pan, 4K…"
-              rows={3}
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="video-style">Style (for smart routing)</Label>
-            <Select value={style} onValueChange={setStyle}>
-              <SelectTrigger id="video-style">
-                <SelectValue placeholder="Auto-detect" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Auto-detect</SelectItem>
-                <SelectItem value="cinematic">Cinematic (→ RunwayML)</SelectItem>
-                <SelectItem value="photorealistic">Photorealistic (→ RunwayML)</SelectItem>
-                <SelectItem value="animated">Animated (→ Pika)</SelectItem>
-                <SelectItem value="cartoon">Cartoon (→ Pika)</SelectItem>
-                <SelectItem value="stylized">Stylized (→ Pika)</SelectItem>
-                <SelectItem value="anime">Anime (→ Pika)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Generate
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function CombinedDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [name, setName] = useState('')
-  const [videoPrompt, setVideoPrompt] = useState('')
-  const [musicPrompt, setMusicPrompt] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  const handleSubmit = async () => {
-    if (!name.trim() || !videoPrompt.trim() || !musicPrompt.trim()) {
-      toast.error('Please fill in all three fields.')
-      return
-    }
-    setLoading(true)
-    try {
-      const res = await mediaApi.generateCombined({
-        name: name.trim(),
-        video_prompt: videoPrompt.trim(),
-        music_prompt: musicPrompt.trim(),
-      })
-      toast.success(`Combined media job submitted (ID: ${res.job_id})`)
-      onClose()
-      setName('')
-      setVideoPrompt('')
-      setMusicPrompt('')
-    } catch {
-      toast.error('Failed to submit combined media generation job.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Layers className="h-5 w-5" /> Generate Combined Media
-          </DialogTitle>
-          <DialogDescription>
-            Generate music and video concurrently, then merge them into a single file using ffmpeg.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="combined-name">Name</Label>
-            <Input
-              id="combined-name"
-              placeholder="My promo video"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="combined-video">Video prompt</Label>
-            <Textarea
-              id="combined-video"
-              placeholder="Aerial shot of a city at night, cinematic…"
-              rows={2}
-              value={videoPrompt}
-              onChange={(e) => setVideoPrompt(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="combined-music">Music prompt</Label>
-            <Textarea
-              id="combined-music"
-              placeholder="Atmospheric electronic soundtrack, slow build…"
-              rows={2}
-              value={musicPrompt}
-              onChange={(e) => setMusicPrompt(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Generate
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
+function providerList(v: MusicProvider | VideoProvider): string[] {
+  return v === 'both' ? [] : [v]
 }
 
 // ---------------------------------------------------------------------------
@@ -325,95 +143,207 @@ function CombinedDialog({ open, onClose }: { open: boolean; onClose: () => void 
 // ---------------------------------------------------------------------------
 
 export default function MediaPage() {
-  const [activeDialog, setActiveDialog] = useState<DialogType>(null)
+  const [mode, setMode] = useState<MediaMode>('music')
+  const [musicProvider, setMusicProvider] = useState<MusicProvider>('suno')
+  const [videoProvider, setVideoProvider] = useState<VideoProvider>('runway')
+
+  const [prompt, setPrompt] = useState('')
+  const [videoPrompt, setVideoPrompt] = useState('')
+  const [musicPrompt, setMusicPrompt] = useState('')
+
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [audioFile, setAudioFile] = useState<File | null>(null)
+
+  const [loading, setLoading] = useState(false)
+
+  const wantsMusic = mode === 'music' || mode === 'both'
+  const wantsVideo = mode === 'video' || mode === 'both'
+  const isBoth = mode === 'both'
+
+  const handleGenerate = async () => {
+    const mainPrompt = isBoth ? undefined : prompt.trim()
+    const vPrompt = isBoth ? videoPrompt.trim() : mainPrompt
+    const mPrompt = isBoth ? musicPrompt.trim() : mainPrompt
+
+    if (!mainPrompt && !isBoth) {
+      toast.error('Enter a prompt before generating.')
+      return
+    }
+    if (isBoth && (!vPrompt || !mPrompt)) {
+      toast.error('Enter both a video prompt and a music prompt.')
+      return
+    }
+
+    setLoading(true)
+    try {
+      if (mode === 'music') {
+        const res = await mediaApi.generateMusic({
+          name: `Music – ${new Date().toLocaleTimeString()}`,
+          prompt: mPrompt!,
+          providers: providerList(musicProvider),
+        })
+        toast.success(`Music job submitted (${res.job_id})`)
+      } else if (mode === 'video') {
+        const res = await mediaApi.generateVideo({
+          name: `Video – ${new Date().toLocaleTimeString()}`,
+          prompt: vPrompt!,
+          providers: providerList(videoProvider),
+        })
+        toast.success(`Video job submitted (${res.job_id})`)
+      } else {
+        const res = await mediaApi.generateCombined({
+          name: `Combined – ${new Date().toLocaleTimeString()}`,
+          video_prompt: vPrompt!,
+          music_prompt: mPrompt!,
+          video_providers: providerList(videoProvider),
+          music_providers: providerList(musicProvider),
+        })
+        toast.success(`Combined media job submitted (${res.job_id})`)
+      }
+
+      // Reset
+      setPrompt('')
+      setVideoPrompt('')
+      setMusicPrompt('')
+      setImageFile(null)
+      setAudioFile(null)
+    } catch {
+      toast.error('Failed to submit generation job.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <AppShell>
       <div className="flex-1 overflow-y-auto">
-        <div className="px-6 py-6 space-y-6">
+        <div className="px-6 py-6 max-w-2xl space-y-7">
+
+          {/* Header */}
           <header className="space-y-1">
             <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
               <Clapperboard className="h-6 w-6" />
               Media Generation
             </h1>
-            <p className="text-muted-foreground">
-              Generate music, video, and combined media using AI — powered by Suno, Udio, RunwayML, and Pika.
+            <p className="text-muted-foreground text-sm">
+              Generate music, video, or both — smart-routed to the best provider.
             </p>
           </header>
 
-          {/* Action buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl">
-            <button
-              onClick={() => setActiveDialog('music')}
-              className="group flex flex-col items-start gap-3 rounded-xl border bg-card p-5 text-left shadow-sm transition-all hover:border-primary hover:shadow-md"
-            >
-              <div className="flex items-center gap-2">
-                <div className="rounded-lg bg-primary/10 p-2 group-hover:bg-primary/20 transition-colors">
-                  <Music className="h-5 w-5 text-primary" />
-                </div>
-                <span className="font-semibold">Music</span>
-              </div>
-              <p className="text-sm text-muted-foreground leading-snug">
-                Generate a music track from a text prompt. Smart routing picks Suno or Udio.
-              </p>
-              <div className="flex gap-1.5 flex-wrap">
-                <Badge variant="secondary" className="text-xs">Suno</Badge>
-                <Badge variant="secondary" className="text-xs">Udio</Badge>
-              </div>
-            </button>
+          <Separator />
 
-            <button
-              onClick={() => setActiveDialog('video')}
-              className="group flex flex-col items-start gap-3 rounded-xl border bg-card p-5 text-left shadow-sm transition-all hover:border-primary hover:shadow-md"
-            >
-              <div className="flex items-center gap-2">
-                <div className="rounded-lg bg-primary/10 p-2 group-hover:bg-primary/20 transition-colors">
-                  <Film className="h-5 w-5 text-primary" />
-                </div>
-                <span className="font-semibold">Video</span>
-              </div>
-              <p className="text-sm text-muted-foreground leading-snug">
-                Generate a video clip from a text prompt. Smart routing picks RunwayML or Pika.
-              </p>
-              <div className="flex gap-1.5 flex-wrap">
-                <Badge variant="secondary" className="text-xs">RunwayML</Badge>
-                <Badge variant="secondary" className="text-xs">Pika</Badge>
-              </div>
-            </button>
-
-            <button
-              onClick={() => setActiveDialog('combined')}
-              className="group flex flex-col items-start gap-3 rounded-xl border bg-card p-5 text-left shadow-sm transition-all hover:border-primary hover:shadow-md"
-            >
-              <div className="flex items-center gap-2">
-                <div className="rounded-lg bg-primary/10 p-2 group-hover:bg-primary/20 transition-colors">
-                  <Layers className="h-5 w-5 text-primary" />
-                </div>
-                <span className="font-semibold">Combined</span>
-              </div>
-              <p className="text-sm text-muted-foreground leading-snug">
-                Generate music + video concurrently, then merge them into one file via ffmpeg.
-              </p>
-              <div className="flex gap-1.5 flex-wrap">
-                <Badge variant="secondary" className="text-xs">Music + Video</Badge>
-              </div>
-            </button>
+          {/* What to generate */}
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Generate
+            </Label>
+            <ToggleGroup options={MEDIA_OPTIONS} value={mode} onChange={setMode} />
           </div>
 
-          <p className="text-xs text-muted-foreground max-w-2xl">
-            Jobs run in the background. Configure API keys in your <code className="bg-muted rounded px-1">.env</code> file:
-            {' '}<code className="bg-muted rounded px-1">SUNO_API_KEY</code>,{' '}
-            <code className="bg-muted rounded px-1">UDIO_API_KEY</code>,{' '}
-            <code className="bg-muted rounded px-1">RUNWAY_API_KEY</code>,{' '}
-            <code className="bg-muted rounded px-1">PIKA_API_KEY</code>.
-            Combined mode also requires <code className="bg-muted rounded px-1">ffmpeg</code>.
-          </p>
+          {/* Music provider */}
+          {wantsMusic && (
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Music via
+              </Label>
+              <ToggleGroup
+                options={MUSIC_OPTIONS}
+                value={musicProvider}
+                onChange={setMusicProvider}
+              />
+            </div>
+          )}
+
+          {/* Video provider */}
+          {wantsVideo && (
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Video via
+              </Label>
+              <ToggleGroup
+                options={VIDEO_OPTIONS}
+                value={videoProvider}
+                onChange={setVideoProvider}
+              />
+            </div>
+          )}
+
+          <Separator />
+
+          {/* Prompt(s) */}
+          {isBoth ? (
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="video-prompt">Video prompt</Label>
+                <Textarea
+                  id="video-prompt"
+                  rows={3}
+                  placeholder="A misty mountain at sunrise, cinematic slow pan…"
+                  value={videoPrompt}
+                  onChange={(e) => setVideoPrompt(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="music-prompt">Music prompt</Label>
+                <Textarea
+                  id="music-prompt"
+                  rows={3}
+                  placeholder="Atmospheric orchestral build, slow and cinematic…"
+                  value={musicPrompt}
+                  onChange={(e) => setMusicPrompt(e.target.value)}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Label htmlFor="prompt">Prompt</Label>
+              <Textarea
+                id="prompt"
+                rows={4}
+                placeholder={
+                  mode === 'music'
+                    ? 'Upbeat jazz with piano and trumpet, café atmosphere…'
+                    : 'Aerial shot of a city at night, cinematic drone footage…'
+                }
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+              />
+            </div>
+          )}
+
+          {/* File uploads */}
+          <div className="flex flex-wrap gap-3">
+            {wantsVideo && (
+              <FilePill
+                accept="image/*"
+                icon={<ImageIcon className="h-3.5 w-3.5" />}
+                label="Add image"
+                file={imageFile}
+                onChange={setImageFile}
+              />
+            )}
+            <FilePill
+              accept="audio/*"
+              icon={<Music2 className="h-3.5 w-3.5" />}
+              label="Add audio"
+              file={audioFile}
+              onChange={setAudioFile}
+            />
+          </div>
+
+          {/* Submit */}
+          <Button
+            onClick={handleGenerate}
+            disabled={loading}
+            size="lg"
+            className="w-full sm:w-auto"
+          >
+            {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Generate{mode === 'both' ? ' Music + Video' : mode === 'music' ? ' Music' : ' Video'}
+          </Button>
+
         </div>
       </div>
-
-      <MusicDialog open={activeDialog === 'music'} onClose={() => setActiveDialog(null)} />
-      <VideoDialog open={activeDialog === 'video'} onClose={() => setActiveDialog(null)} />
-      <CombinedDialog open={activeDialog === 'combined'} onClose={() => setActiveDialog(null)} />
     </AppShell>
   )
 }
