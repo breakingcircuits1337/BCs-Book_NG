@@ -21,6 +21,7 @@ from api.routers import (
     embedding_rebuild,
     episode_profiles,
     insights,
+    media,
     models,
     notebooks,
     notes,
@@ -162,6 +163,7 @@ app.include_router(episode_profiles.router, prefix="/api", tags=["episode-profil
 app.include_router(speaker_profiles.router, prefix="/api", tags=["speaker-profiles"])
 app.include_router(chat.router, prefix="/api", tags=["chat"])
 app.include_router(source_chat.router, prefix="/api", tags=["source-chat"])
+app.include_router(media.router, prefix="/api", tags=["media"])
 
 
 @app.get("/")

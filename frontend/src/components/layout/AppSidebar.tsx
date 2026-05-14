@@ -31,6 +31,7 @@ import {
   Book,
   Search,
   Mic,
+  Clapperboard,
   Bot,
   Shuffle,
   Settings,
@@ -61,6 +62,7 @@ const getNavigation = (t: TranslationKeys) => [
     title: t.navigation.create,
     items: [
       { name: t.navigation.podcasts, href: '/podcasts', icon: Mic },
+      { name: t.navigation.media, href: '/media', icon: Clapperboard },
     ],
   },
   {

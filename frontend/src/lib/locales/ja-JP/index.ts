@@ -217,6 +217,7 @@ export const jaJP = {
     notebooks: "ノートブック",
     askAndSearch: "質問と検索",
     podcasts: "ポッドキャスト",
+    media: "メディア",
     models: "モデル",
     transformations: "トランスフォーメーション",
     transformation: "トランスフォーメーション",

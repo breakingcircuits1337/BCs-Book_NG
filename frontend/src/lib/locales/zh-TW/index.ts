@@ -219,6 +219,7 @@ export const zhTW = {
     search: "搜尋",
     ask: "提問",
     podcasts: "播客",
+    media: "媒體",
     models: "模型",
     transformations: "轉換",
     transformation: "轉換",
