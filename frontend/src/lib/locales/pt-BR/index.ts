@@ -217,6 +217,7 @@ export const ptBR = {
     notebooks: "Cadernos",
     askAndSearch: "Perguntar e Buscar",
     podcasts: "Podcasts",
+    media: "Mídia",
     models: "Modelos",
     transformations: "Transformações",
     transformation: "Transformação",

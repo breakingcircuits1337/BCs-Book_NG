@@ -219,6 +219,7 @@ export const zhCN = {
     search: "搜索",
     ask: "提问",
     podcasts: "播客",
+    media: "媒体",
     models: "模型",
     transformations: "转换",
     transformation: "转换",
