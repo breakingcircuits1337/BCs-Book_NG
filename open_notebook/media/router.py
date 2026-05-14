@@ -151,11 +151,14 @@ async def generate_video(
     )
 
 
-async def _download(url: str) -> bytes:
-    async with httpx.AsyncClient(timeout=120) as client:
-        resp = await client.get(url)
-        resp.raise_for_status()
-        return resp.content
+async def _stream_to_file(url: str, dest: str) -> None:
+    """Stream a remote URL directly to a local file without buffering the full body."""
+    async with httpx.AsyncClient(timeout=300) as client:
+        async with client.stream("GET", url) as resp:
+            resp.raise_for_status()
+            with open(dest, "wb") as f:
+                async for chunk in resp.aiter_bytes():
+                    f.write(chunk)
 
 
 async def merge_music_and_video(
@@ -233,18 +236,30 @@ async def generate_combined(
 
     music_result, video_result = await asyncio.gather(music_task, video_task)
 
-    # Download both files to temp locations for ffmpeg
+    # Validate that we have usable output from each provider
+    if not music_result.audio_url and not music_result.audio_data:
+        raise RuntimeError("Music provider returned neither audio_url nor audio_data")
+    if not video_result.video_url and not video_result.video_data:
+        raise RuntimeError("Video provider returned neither video_url nor video_data")
+
+    # Stream both files to temp locations for ffmpeg (avoids loading full content into memory)
     with tempfile.TemporaryDirectory() as tmp:
         audio_tmp = os.path.join(tmp, "audio.mp3")
         video_tmp = os.path.join(tmp, "video.mp4")
 
-        audio_bytes, video_bytes = await asyncio.gather(
-            _download(music_result.audio_url),
-            _download(video_result.video_url),
-        )
+        async def _save_audio() -> None:
+            if music_result.audio_url:
+                await _stream_to_file(music_result.audio_url, audio_tmp)
+            else:
+                Path(audio_tmp).write_bytes(music_result.audio_data)  # type: ignore[arg-type]
 
-        Path(audio_tmp).write_bytes(audio_bytes)
-        Path(video_tmp).write_bytes(video_bytes)
+        async def _save_video() -> None:
+            if video_result.video_url:
+                await _stream_to_file(video_result.video_url, video_tmp)
+            else:
+                Path(video_tmp).write_bytes(video_result.video_data)  # type: ignore[arg-type]
+
+        await asyncio.gather(_save_audio(), _save_video())
 
         await merge_music_and_video(video_tmp, audio_tmp, output_path)
 

@@ -76,9 +76,11 @@ async def generate_music_command(
             import httpx
 
             async with httpx.AsyncClient(timeout=120) as client:
-                resp = await client.get(result.audio_url)
-                resp.raise_for_status()
-                audio_path.write_bytes(resp.content)
+                async with client.stream("GET", result.audio_url) as resp:
+                    resp.raise_for_status()
+                    with open(audio_path, "wb") as f:
+                        async for chunk in resp.aiter_bytes():
+                            f.write(chunk)
         elif result.audio_data:
             audio_path.write_bytes(result.audio_data)
         else:
@@ -171,9 +173,11 @@ async def generate_video_command(
             import httpx
 
             async with httpx.AsyncClient(timeout=300) as client:
-                resp = await client.get(result.video_url)
-                resp.raise_for_status()
-                video_path.write_bytes(resp.content)
+                async with client.stream("GET", result.video_url) as resp:
+                    resp.raise_for_status()
+                    with open(video_path, "wb") as f:
+                        async for chunk in resp.aiter_bytes():
+                            f.write(chunk)
         elif result.video_data:
             video_path.write_bytes(result.video_data)
         else:

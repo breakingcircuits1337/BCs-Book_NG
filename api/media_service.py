@@ -97,7 +97,7 @@ class MusicService:
 
         except Exception as exc:
             logger.error(f"Failed to submit music job: {exc}")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail="Failed to submit music generation job")
 
     @staticmethod
     async def get_job(job_id: str) -> MusicJob:
@@ -176,7 +176,7 @@ class VideoService:
 
         except Exception as exc:
             logger.error(f"Failed to submit video job: {exc}")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail="Failed to submit video generation job")
 
     @staticmethod
     async def get_job(job_id: str) -> VideoJob:
@@ -250,7 +250,7 @@ class CombinedMediaService:
 
         except Exception as exc:
             logger.error(f"Failed to submit combined media job: {exc}")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail="Failed to submit combined media generation job")
 
     @staticmethod
     async def get_job(job_id: str) -> CombinedMediaJob:
