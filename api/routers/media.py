@@ -368,7 +368,12 @@ async def delete_combined_job(job_id: str):
 @router.get("/media/providers", tags=["media"])
 async def list_media_providers():
     """Return which music and video providers are currently configured."""
-    from open_notebook.media.providers import PikaProvider, RunwayProvider, SunoProvider, UdioProvider
+    from open_notebook.media.providers import (
+        PikaProvider,
+        RunwayProvider,
+        SunoProvider,
+        UdioProvider,
+    )
 
     return {
         "music": [

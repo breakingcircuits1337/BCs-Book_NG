@@ -13,7 +13,6 @@ from open_notebook.database.repository import ensure_record_id
 from open_notebook.media.models import CombinedMediaJob, MusicJob, VideoJob
 from open_notebook.media.router import generate_combined, generate_music, generate_video
 
-
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------

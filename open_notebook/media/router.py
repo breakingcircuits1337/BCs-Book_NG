@@ -17,7 +17,12 @@ from typing import List, Optional
 import httpx
 from loguru import logger
 
-from open_notebook.media.providers.base import MusicProvider, MusicResult, VideoProvider, VideoResult
+from open_notebook.media.providers.base import (
+    MusicProvider,
+    MusicResult,
+    VideoProvider,
+    VideoResult,
+)
 from open_notebook.media.providers.pika import PikaProvider
 from open_notebook.media.providers.runway import RunwayProvider
 from open_notebook.media.providers.suno import SunoProvider
