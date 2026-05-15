@@ -61,6 +61,9 @@ In a world dominated by Artificial Intelligence, having the ability to think �
 - 🤖 **Choose your AI models** - Support for 16+ providers including OpenAI, Anthropic, Ollama, LM Studio, and more
 - 📚 **Organize multi-modal content** - PDFs, videos, audio, web pages, and more
 - 🎙️ **Generate professional podcasts** - Advanced multi-speaker podcast generation
+- 🎵 **Generate AI music** - Suno and Udio with smart style-based provider routing
+- 🎬 **Generate AI video** - RunwayML and Pika with image-to-video support
+- 🎞️ **Create combined media** - Generate music + video concurrently and merge via ffmpeg
 - 🔍 **Search intelligently** - Full-text and vector search across all your content
 - 💬 **Chat with context** - AI conversations powered by your research
 - 🌐 **Multi-language UI** - English, Portuguese, Chinese (Simplified & Traditional), and Japanese support
@@ -79,6 +82,9 @@ Learn more about our project at [https://www.open-notebook.ai](https://www.open-
 | **AI Provider Choice** | 16+ providers (OpenAI, Anthropic, Ollama, LM Studio, etc.) | Google models only | Flexibility and cost optimization |
 | **Podcast Speakers** | 1-4 speakers with custom profiles | 2 speakers only | Extreme flexibility |
 | **Content Transformations** | Custom and built-in | Limited options | Unlimited processing power |
+| **Music Generation** | Suno + Udio, smart-routed by style | None | Unique creative capability |
+| **Video Generation** | RunwayML + Pika, image-to-video | None | Unique creative capability |
+| **Combined Media** | Music + video concurrent, ffmpeg merge | None | End-to-end media production |
 | **API Access** | Full REST API | No API | Complete automation |
 | **Deployment** | Docker, cloud, or local | Google hosted only | Deploy anywhere |
 | **Citations** | Basic references (will improve) | Comprehensive with sources | Research integrity |
@@ -183,11 +189,26 @@ bash scripts/launch-native.sh --stop   # or: make stop-native
 [![Star History Chart](https://api.star-history.com/svg?repos=lfnovo/open-notebook&type=date&legend=top-left)](https://www.star-history.com/#lfnovo/open-notebook&type=date&legend=top-left)
 
 
-## Provider Support Matrix
+## Media Generation Provider Matrix
 
-Thanks to the [Esperanto](https://github.com/lfnovo/esperanto) library, we support this providers out of the box!
+BCs BookNG adds native music and video generation via four specialized providers:
 
-| Provider     | LLM Support | Embedding Support | Speech-to-Text | Text-to-Speech |
+| Provider | Type | Smart-routed for | Requires |
+|----------|------|-----------------|---------|
+| **Suno** | Music | Vocals, songs with lyrics, pop, rock, hip-hop | `SUNO_API_KEY` |
+| **Udio** | Music | Instrumental, ambient, cinematic, classical, jazz | `UDIO_API_KEY` |
+| **RunwayML** | Video | Cinematic, photorealistic, nature, product | `RUNWAY_API_KEY` |
+| **Pika** | Video | Animated, cartoon, stylized, abstract, anime | `PIKA_API_KEY` |
+
+> **Combined mode** generates music + video concurrently and merges them with ffmpeg. All four providers support an optional style hint and duration parameter. Set any subset of keys — the smart router uses only configured providers with automatic fallback.
+
+---
+
+## LLM / Embedding Provider Support Matrix
+
+Thanks to the [Esperanto](https://github.com/lfnovo/esperanto) library, we support these providers out of the box!
+
+| Provider | LLM Support | Embedding Support | Speech-to-Text | Text-to-Speech |
 |--------------|-------------|------------------|----------------|----------------|
 | OpenAI       | ✅          | ✅               | ✅             | ✅             |
 | Anthropic    | ✅          | ❌               | ❌             | ❌             |
@@ -228,6 +249,14 @@ Thanks to the [Esperanto](https://github.com/lfnovo/esperanto) library, we suppo
 - **📎 Citations**: Get answers with proper source citations
 - **🎨 Theme & Accent Customization**: Pick dark/light/system mode and one of 6 accent color presets from the Settings page; choice is persisted and applied instantly without a page reload
 - **🖥️ Desktop App Support**: Installable as a PWA (browser install prompt) or via a native Linux `.desktop` launcher — opens in a chromeless app window with all data preserved on close
+
+### Media Generation (BCs BookNG Exclusive)
+- **🎵 AI Music Generation**: Generate music from text prompts via Suno or Udio. Style-aware smart routing picks the best provider automatically (Suno for vocals/songs, Udio for instrumental/ambient/cinematic). Supports optional style hints and duration.
+- **🎬 AI Video Generation**: Generate video from text prompts or input images via RunwayML or Pika. Image-to-video supported for both providers. Smart routing by style (RunwayML for cinematic/photorealistic, Pika for animated/stylized).
+- **🎞️ Combined Music + Video**: Submit both prompts at once — music and video generate concurrently, then merge automatically with ffmpeg into a single file.
+- **📋 Live Jobs Dashboard**: Track all generation jobs in real time with color-coded status badges (pending/running/completed/failed), inline audio and video playback, download buttons, and one-click delete. Auto-polls every 5 seconds while jobs are active.
+- **🔌 Provider Status Indicators**: See at a glance which providers are configured (green dot) or missing an API key (gray dot) directly on the media page.
+- **⚙️ Async Job Queue**: All generation runs in the background via fire-and-forget job queue — the UI never blocks while providers are working.
 
 
 ## Podcast Feature
@@ -270,6 +299,7 @@ Thanks to the [Esperanto](https://github.com/lfnovo/esperanto) library, we suppo
 - **Bookmark Integration**: Connect with your favorite bookmarking apps
 
 ### Recently Completed ✅
+- **AI Media Generation** *(BCs BookNG exclusive)*: Full music, video, and combined generation pipeline — Suno/Udio for music, RunwayML/Pika for video, smart routing by style keywords, concurrent generation with ffmpeg merging, live jobs dashboard with inline playback and auto-polling
 - **Theme Customization**: In-app accent color picker (6 presets: Blue, Purple, Green, Rose, Orange, Teal) with dark/light/system toggle, persisted to localStorage and flash-free on page load
 - **Desktop App / PWA**: Installable as a Progressive Web App from any Chromium browser; one-command Linux `.desktop` launcher via `scripts/install-desktop.sh`
 - **Native (No-Docker) Installation**: Full Docker-free path — `setup-native.sh` installs all deps into an isolated Python venv, `launch-native.sh` manages all four services with graceful shutdown
