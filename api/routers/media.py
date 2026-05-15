@@ -1,5 +1,6 @@
 """REST endpoints for music, video, and combined media generation."""
 
+import asyncio
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import unquote, urlparse
@@ -74,6 +75,13 @@ class CombinedJobResponse(BaseModel):
     job_status: Optional[str] = None
 
 
+async def _job_status(job) -> Optional[str]:
+    """Return queue status if a command is attached, otherwise the job's own status field."""
+    if job.command:
+        return await job.get_job_status()
+    return job.status
+
+
 def _file_url(file_path: str) -> Optional[str]:
     if not file_path:
         return None
@@ -103,9 +111,9 @@ async def generate_music(request: MusicGenerationRequest):
 async def list_music_jobs():
     """List all music generation jobs."""
     jobs = await MusicService.list_jobs()
+    statuses = await asyncio.gather(*[_job_status(job) for job in jobs])
     results = []
-    for job in jobs:
-        job_status = await job.get_job_status() if job.command else job.status
+    for job, job_status in zip(jobs, statuses):
         audio_url = None
         if job.audio_file and _file_url(job.audio_file):
             audio_url = f"/api/media/music/{job.id}/audio"
@@ -195,9 +203,9 @@ async def generate_video(request: VideoGenerationRequest):
 async def list_video_jobs():
     """List all video generation jobs."""
     jobs = await VideoService.list_jobs()
+    statuses = await asyncio.gather(*[_job_status(job) for job in jobs])
     results = []
-    for job in jobs:
-        job_status = await job.get_job_status() if job.command else job.status
+    for job, job_status in zip(jobs, statuses):
         video_url = None
         if job.video_file and _file_url(job.video_file):
             video_url = f"/api/media/video/{job.id}/stream"
@@ -292,9 +300,9 @@ async def generate_combined(request: CombinedMediaRequest):
 async def list_combined_jobs():
     """List all combined media generation jobs."""
     jobs = await CombinedMediaService.list_jobs()
+    statuses = await asyncio.gather(*[_job_status(job) for job in jobs])
     results = []
-    for job in jobs:
-        job_status = await job.get_job_status() if job.command else job.status
+    for job, job_status in zip(jobs, statuses):
         output_url = None
         if job.output_file and _file_url(job.output_file):
             output_url = f"/api/media/combined/{job.id}/stream"
@@ -360,7 +368,12 @@ async def delete_combined_job(job_id: str):
 @router.get("/media/providers", tags=["media"])
 async def list_media_providers():
     """Return which music and video providers are currently configured."""
-    from open_notebook.media.providers import PikaProvider, RunwayProvider, SunoProvider, UdioProvider
+    from open_notebook.media.providers import (
+        PikaProvider,
+        RunwayProvider,
+        SunoProvider,
+        UdioProvider,
+    )
 
     return {
         "music": [

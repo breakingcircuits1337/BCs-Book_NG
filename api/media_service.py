@@ -9,7 +9,6 @@ from surreal_commands import get_command_status, submit_command
 
 from open_notebook.media.models import CombinedMediaJob, MusicJob, VideoJob
 
-
 # ---------------------------------------------------------------------------
 # Request / response schemas
 # ---------------------------------------------------------------------------
@@ -66,6 +65,10 @@ class MusicService:
                 duration=req.duration,
                 providers=req.providers,
                 status="pending",
+                provider_used=None,
+                audio_file=None,
+                command=None,
+                metadata=None,
             )
             await job.save()
 
@@ -97,7 +100,7 @@ class MusicService:
 
         except Exception as exc:
             logger.error(f"Failed to submit music job: {exc}")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail="Failed to submit music generation job")
 
     @staticmethod
     async def get_job(job_id: str) -> MusicJob:
@@ -144,6 +147,10 @@ class VideoService:
                 image_url=req.image_url,
                 providers=req.providers,
                 status="pending",
+                provider_used=None,
+                video_file=None,
+                command=None,
+                metadata=None,
             )
             await job.save()
 
@@ -176,7 +183,7 @@ class VideoService:
 
         except Exception as exc:
             logger.error(f"Failed to submit video job: {exc}")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail="Failed to submit video generation job")
 
     @staticmethod
     async def get_job(job_id: str) -> VideoJob:
@@ -215,7 +222,14 @@ class CombinedMediaService:
     @staticmethod
     async def submit_generation_job(req: CombinedMediaRequest) -> str:
         try:
-            job = CombinedMediaJob(name=req.name, status="pending")
+            job = CombinedMediaJob(
+                name=req.name,
+                status="pending",
+                music_job=None,
+                video_job=None,
+                output_file=None,
+                command=None,
+            )
             await job.save()
 
             try:
@@ -250,7 +264,7 @@ class CombinedMediaService:
 
         except Exception as exc:
             logger.error(f"Failed to submit combined media job: {exc}")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail="Failed to submit combined media generation job")
 
     @staticmethod
     async def get_job(job_id: str) -> CombinedMediaJob:

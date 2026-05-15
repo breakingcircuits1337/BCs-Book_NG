@@ -1,18 +1,44 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Clapperboard, ImageIcon, Music2, Loader2, X, Upload } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Clapperboard,
+  ImageIcon,
+  Music2,
+  Loader2,
+  X,
+  Upload,
+  Trash2,
+  Download,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Video,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import { mediaApi } from '@/lib/api/media'
+import { getApiUrl } from '@/lib/config'
+import {
+  useMediaJobs,
+  useMediaProviders,
+  useDeleteMusicJob,
+  useDeleteVideoJob,
+  useDeleteCombinedJob,
+  useGenerateMedia,
+} from '@/lib/hooks/use-media'
+import type { MusicJob, VideoJob, CombinedJob } from '@/lib/api/media'
 
 // ---------------------------------------------------------------------------
-// Reusable pill-toggle group
+// ToggleGroup
 // ---------------------------------------------------------------------------
 
 interface ToggleOption<T extends string> {
@@ -52,7 +78,7 @@ function ToggleGroup<T extends string>({
 }
 
 // ---------------------------------------------------------------------------
-// File upload pill
+// FilePill
 // ---------------------------------------------------------------------------
 
 function FilePill({
@@ -63,7 +89,7 @@ function FilePill({
   onChange,
 }: {
   accept: string
-  icon: React.ReactNode
+  icon: ReactNode
   label: string
   file: File | null
   onChange: (f: File | null) => void
@@ -109,7 +135,231 @@ function FilePill({
 }
 
 // ---------------------------------------------------------------------------
-// Types
+// StatusBadge
+// ---------------------------------------------------------------------------
+
+function StatusBadge({ status }: { status: string }) {
+  const s = status?.toLowerCase() ?? ''
+  if (s === 'completed') {
+    return (
+      <Badge variant="outline" className="text-green-600 border-green-600 flex items-center gap-1">
+        <CheckCircle2 className="h-3 w-3" />
+        Completed
+      </Badge>
+    )
+  }
+  if (s === 'failed') {
+    return (
+      <Badge variant="destructive" className="flex items-center gap-1">
+        <AlertCircle className="h-3 w-3" />
+        Failed
+      </Badge>
+    )
+  }
+  if (s === 'running') {
+    return (
+      <Badge variant="outline" className="text-blue-600 border-blue-600 flex items-center gap-1">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Running
+      </Badge>
+    )
+  }
+  return (
+    <Badge variant="outline" className="text-yellow-600 border-yellow-600 flex items-center gap-1">
+      <Clock className="h-3 w-3" />
+      {status ?? 'Pending'}
+    </Badge>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// JobCard
+// ---------------------------------------------------------------------------
+
+function MusicJobCard({
+  job,
+  apiBase,
+  onDelete,
+  isDeleting,
+}: {
+  job: MusicJob
+  apiBase: string
+  onDelete: () => void
+  isDeleting: boolean
+}) {
+  const jobStatus = job.job_status ?? job.status
+  const audioSrc = job.audio_url ? `${apiBase}${job.audio_url}` : null
+
+  return (
+    <Card>
+      <CardContent className="pt-4 pb-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0 space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <StatusBadge status={jobStatus ?? job.status} />
+              {job.provider_used && (
+                <Badge variant="secondary" className="text-xs">{job.provider_used}</Badge>
+              )}
+            </div>
+            <p className="font-medium text-sm truncate">{job.name}</p>
+            <p className="text-xs text-muted-foreground line-clamp-2">{job.prompt}</p>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            {job.audio_url && (
+              <a
+                href={audioSrc ?? ''}
+                download
+                className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              >
+                <Download className="h-4 w-4" />
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={isDeleting}
+              className="p-1.5 rounded hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+        {job.created && (
+          <p className="text-xs text-muted-foreground mt-1">{job.created}</p>
+        )}
+        {audioSrc && jobStatus === 'completed' && (
+          <audio controls className="mt-3 w-full h-8" src={audioSrc} />
+        )}
+        {job.error_message && (
+          <p className="text-xs text-destructive mt-2">{job.error_message}</p>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function VideoJobCard({
+  job,
+  apiBase,
+  onDelete,
+  isDeleting,
+}: {
+  job: VideoJob
+  apiBase: string
+  onDelete: () => void
+  isDeleting: boolean
+}) {
+  const jobStatus = job.job_status ?? job.status
+  const videoSrc = job.video_url ? `${apiBase}${job.video_url}` : null
+
+  return (
+    <Card>
+      <CardContent className="pt-4 pb-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0 space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <StatusBadge status={jobStatus ?? job.status} />
+              {job.provider_used && (
+                <Badge variant="secondary" className="text-xs">{job.provider_used}</Badge>
+              )}
+            </div>
+            <p className="font-medium text-sm truncate">{job.name}</p>
+            <p className="text-xs text-muted-foreground line-clamp-2">{job.prompt}</p>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            {job.video_url && (
+              <a
+                href={videoSrc ?? ''}
+                download
+                className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              >
+                <Download className="h-4 w-4" />
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={isDeleting}
+              className="p-1.5 rounded hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+        {job.created && (
+          <p className="text-xs text-muted-foreground mt-1">{job.created}</p>
+        )}
+        {videoSrc && jobStatus === 'completed' && (
+          <video controls className="mt-3 w-full rounded" src={videoSrc} />
+        )}
+        {job.error_message && (
+          <p className="text-xs text-destructive mt-2">{job.error_message}</p>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function CombinedJobCard({
+  job,
+  apiBase,
+  onDelete,
+  isDeleting,
+}: {
+  job: CombinedJob
+  apiBase: string
+  onDelete: () => void
+  isDeleting: boolean
+}) {
+  const jobStatus = job.job_status ?? job.status
+  const outputSrc = job.output_url ? `${apiBase}${job.output_url}` : null
+
+  return (
+    <Card>
+      <CardContent className="pt-4 pb-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0 space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <StatusBadge status={jobStatus ?? job.status} />
+            </div>
+            <p className="font-medium text-sm truncate">{job.name}</p>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            {job.output_url && (
+              <a
+                href={outputSrc ?? ''}
+                download
+                className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              >
+                <Download className="h-4 w-4" />
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={isDeleting}
+              className="p-1.5 rounded hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+        {job.created && (
+          <p className="text-xs text-muted-foreground mt-1">{job.created}</p>
+        )}
+        {outputSrc && jobStatus === 'completed' && (
+          <video controls className="mt-3 w-full rounded" src={outputSrc} />
+        )}
+        {job.error_message && (
+          <p className="text-xs text-destructive mt-2">{job.error_message}</p>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Types & constants
 // ---------------------------------------------------------------------------
 
 type MediaMode = 'music' | 'video' | 'both'
@@ -143,22 +393,32 @@ function providerList(v: MusicProvider | VideoProvider): string[] {
 // ---------------------------------------------------------------------------
 
 export default function MediaPage() {
+  const [apiBase, setApiBase] = useState('')
   const [mode, setMode] = useState<MediaMode>('music')
   const [musicProvider, setMusicProvider] = useState<MusicProvider>('suno')
   const [videoProvider, setVideoProvider] = useState<VideoProvider>('runway')
-
   const [prompt, setPrompt] = useState('')
   const [videoPrompt, setVideoPrompt] = useState('')
   const [musicPrompt, setMusicPrompt] = useState('')
-
+  const [style, setStyle] = useState('')
+  const [duration, setDuration] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [audioFile, setAudioFile] = useState<File | null>(null)
-
-  const [loading, setLoading] = useState(false)
 
   const wantsMusic = mode === 'music' || mode === 'both'
   const wantsVideo = mode === 'video' || mode === 'both'
   const isBoth = mode === 'both'
+
+  const { data: providers, isLoading: providersLoading } = useMediaProviders()
+  const { musicJobs, videoJobs, combinedJobs, isLoading: jobsLoading } = useMediaJobs()
+  const { generate, isLoading: generating } = useGenerateMedia()
+  const deleteMusicJob = useDeleteMusicJob()
+  const deleteVideoJob = useDeleteVideoJob()
+  const deleteCombinedJob = useDeleteCombinedJob()
+
+  useEffect(() => {
+    getApiUrl().then(setApiBase).catch(() => setApiBase(''))
+  }, [])
 
   const handleGenerate = async () => {
     const mainPrompt = isBoth ? undefined : prompt.trim()
@@ -174,52 +434,97 @@ export default function MediaPage() {
       return
     }
 
-    setLoading(true)
     try {
+      const parsedDuration = duration ? parseInt(duration, 10) : undefined
+
       if (mode === 'music') {
-        const res = await mediaApi.generateMusic({
-          name: `Music – ${new Date().toLocaleTimeString()}`,
-          prompt: mPrompt!,
-          providers: providerList(musicProvider),
+        await generate({
+          mode: 'music',
+          payload: {
+            name: `Music – ${new Date().toLocaleTimeString()}`,
+            prompt: mPrompt!,
+            providers: providerList(musicProvider),
+            style: style || undefined,
+            duration: parsedDuration,
+          },
         })
-        toast.success(`Music job submitted (${res.job_id})`)
       } else if (mode === 'video') {
-        const res = await mediaApi.generateVideo({
-          name: `Video – ${new Date().toLocaleTimeString()}`,
-          prompt: vPrompt!,
-          providers: providerList(videoProvider),
+        await generate({
+          mode: 'video',
+          payload: {
+            name: `Video – ${new Date().toLocaleTimeString()}`,
+            prompt: vPrompt!,
+            providers: providerList(videoProvider),
+            style: style || undefined,
+            duration: parsedDuration,
+          },
         })
-        toast.success(`Video job submitted (${res.job_id})`)
       } else {
-        const res = await mediaApi.generateCombined({
-          name: `Combined – ${new Date().toLocaleTimeString()}`,
-          video_prompt: vPrompt!,
-          music_prompt: mPrompt!,
-          video_providers: providerList(videoProvider),
-          music_providers: providerList(musicProvider),
+        await generate({
+          mode: 'both',
+          payload: {
+            name: `Combined – ${new Date().toLocaleTimeString()}`,
+            video_prompt: vPrompt!,
+            music_prompt: mPrompt!,
+            video_providers: providerList(videoProvider),
+            music_providers: providerList(musicProvider),
+            video_style: style || undefined,
+            music_style: style || undefined,
+            duration: parsedDuration,
+          },
         })
-        toast.success(`Combined media job submitted (${res.job_id})`)
       }
 
-      // Reset
+      toast.success('Generation started')
       setPrompt('')
       setVideoPrompt('')
       setMusicPrompt('')
+      setStyle('')
+      setDuration('')
       setImageFile(null)
       setAudioFile(null)
     } catch {
-      toast.error('Failed to submit generation job.')
-    } finally {
-      setLoading(false)
+      toast.error('Failed to submit generation job')
     }
   }
+
+  const handleDeleteMusic = async (jobId: string) => {
+    try {
+      await deleteMusicJob.mutateAsync(jobId)
+      toast.success('Job deleted')
+    } catch {
+      toast.error('Failed to delete job')
+    }
+  }
+
+  const handleDeleteVideo = async (jobId: string) => {
+    try {
+      await deleteVideoJob.mutateAsync(jobId)
+      toast.success('Job deleted')
+    } catch {
+      toast.error('Failed to delete job')
+    }
+  }
+
+  const handleDeleteCombined = async (jobId: string) => {
+    try {
+      await deleteCombinedJob.mutateAsync(jobId)
+      toast.success('Job deleted')
+    } catch {
+      toast.error('Failed to delete job')
+    }
+  }
+
+  const allProviders = [
+    ...(providers?.music ?? []),
+    ...(providers?.video ?? []),
+  ]
 
   return (
     <AppShell>
       <div className="flex-1 overflow-y-auto">
         <div className="px-6 py-6 max-w-2xl space-y-7">
 
-          {/* Header */}
           <header className="space-y-1">
             <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
               <Clapperboard className="h-6 w-6" />
@@ -230,9 +535,28 @@ export default function MediaPage() {
             </p>
           </header>
 
+          {!providersLoading && allProviders.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground font-medium">Providers:</span>
+              {allProviders.map((p) => (
+                <div
+                  key={p.name}
+                  className="flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs"
+                >
+                  <span
+                    className={cn(
+                      'h-1.5 w-1.5 rounded-full',
+                      p.available ? 'bg-green-500' : 'bg-gray-400'
+                    )}
+                  />
+                  {p.name}
+                </div>
+              ))}
+            </div>
+          )}
+
           <Separator />
 
-          {/* What to generate */}
           <div className="space-y-2">
             <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Generate
@@ -240,7 +564,6 @@ export default function MediaPage() {
             <ToggleGroup options={MEDIA_OPTIONS} value={mode} onChange={setMode} />
           </div>
 
-          {/* Music provider */}
           {wantsMusic && (
             <div className="space-y-2">
               <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -254,7 +577,6 @@ export default function MediaPage() {
             </div>
           )}
 
-          {/* Video provider */}
           {wantsVideo && (
             <div className="space-y-2">
               <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -268,9 +590,34 @@ export default function MediaPage() {
             </div>
           )}
 
+          <div className="flex gap-4">
+            <div className="flex-1 space-y-1.5">
+              <Label htmlFor="style" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Style
+              </Label>
+              <Input
+                id="style"
+                placeholder="cinematic, ambient, upbeat…"
+                value={style}
+                onChange={(e) => setStyle(e.target.value)}
+              />
+            </div>
+            <div className="w-28 space-y-1.5">
+              <Label htmlFor="duration" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Duration (s)
+              </Label>
+              <Input
+                id="duration"
+                type="number"
+                placeholder="30"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+              />
+            </div>
+          </div>
+
           <Separator />
 
-          {/* Prompt(s) */}
           {isBoth ? (
             <div className="space-y-4">
               <div className="space-y-1.5">
@@ -311,7 +658,6 @@ export default function MediaPage() {
             </div>
           )}
 
-          {/* File uploads */}
           <div className="flex flex-wrap gap-3">
             {wantsVideo && (
               <FilePill
@@ -331,16 +677,91 @@ export default function MediaPage() {
             />
           </div>
 
-          {/* Submit */}
           <Button
             onClick={handleGenerate}
-            disabled={loading}
+            disabled={generating}
             size="lg"
             className="w-full sm:w-auto"
           >
-            {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Generate{mode === 'both' ? ' Music + Video' : mode === 'music' ? ' Music' : ' Video'}
+            {generating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {mode === 'both' ? 'Generate Music + Video' : mode === 'music' ? 'Generate Music' : 'Generate Video'}
           </Button>
+
+          <Separator />
+
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">Your Jobs</h2>
+            <Tabs defaultValue="music">
+              <TabsList>
+                <TabsTrigger value="music" className="flex items-center gap-1.5">
+                  <Music2 className="h-3.5 w-3.5" />
+                  Music
+                </TabsTrigger>
+                <TabsTrigger value="video" className="flex items-center gap-1.5">
+                  <Video className="h-3.5 w-3.5" />
+                  Video
+                </TabsTrigger>
+                <TabsTrigger value="combined" className="flex items-center gap-1.5">
+                  <Clapperboard className="h-3.5 w-3.5" />
+                  Combined
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="music" className="mt-4 space-y-3">
+                {jobsLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading...</p>
+                ) : musicJobs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No music jobs yet. Generate one above.</p>
+                ) : (
+                  musicJobs.map((job) => (
+                    <MusicJobCard
+                      key={job.id}
+                      job={job}
+                      apiBase={apiBase}
+                      onDelete={() => handleDeleteMusic(job.id)}
+                      isDeleting={deleteMusicJob.isPending}
+                    />
+                  ))
+                )}
+              </TabsContent>
+
+              <TabsContent value="video" className="mt-4 space-y-3">
+                {jobsLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading...</p>
+                ) : videoJobs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No video jobs yet. Generate one above.</p>
+                ) : (
+                  videoJobs.map((job) => (
+                    <VideoJobCard
+                      key={job.id}
+                      job={job}
+                      apiBase={apiBase}
+                      onDelete={() => handleDeleteVideo(job.id)}
+                      isDeleting={deleteVideoJob.isPending}
+                    />
+                  ))
+                )}
+              </TabsContent>
+
+              <TabsContent value="combined" className="mt-4 space-y-3">
+                {jobsLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading...</p>
+                ) : combinedJobs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No combined jobs yet. Generate one above.</p>
+                ) : (
+                  combinedJobs.map((job) => (
+                    <CombinedJobCard
+                      key={job.id}
+                      job={job}
+                      apiBase={apiBase}
+                      onDelete={() => handleDeleteCombined(job.id)}
+                      isDeleting={deleteCombinedJob.isPending}
+                    />
+                  ))
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
 
         </div>
       </div>
